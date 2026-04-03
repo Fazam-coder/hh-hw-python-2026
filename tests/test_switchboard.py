@@ -45,3 +45,76 @@ def test_register_call_counts_calls_between_local_and_foreign_users() -> None:
 
     assert switchboard.get_active_calls_count() == 3
     assert switchboard.get_cross_border_calls_count() == 1
+
+
+def test_local_to_local_call_is_not_cross_border() -> None:
+    switchboard = Switchboard()
+    active_call = switchboard.register_call(
+        "10,Alice,+79001112233,11,Bob,+79004445566"
+    )
+
+    assert isinstance(active_call.caller, LocalUser)
+    assert isinstance(active_call.receiver, LocalUser)
+    assert switchboard.get_cross_border_calls_count() == 0
+
+
+def test_foreign_to_foreign_call_is_not_cross_border() -> None:
+    switchboard = Switchboard()
+    active_call = switchboard.register_call(
+        "50,UserDE,+49123,51,UserFR,+33987"
+    )
+
+    assert isinstance(active_call.caller, ForeignUser)
+    assert isinstance(active_call.receiver, ForeignUser)
+    assert switchboard.get_cross_border_calls_count() == 0
+
+
+def test_foreign_to_local_call_is_cross_border() -> None:
+    switchboard = Switchboard()
+    active_call = switchboard.register_call(
+        "20,John,+15550001111,21,Olga,+79998887766"
+    )
+
+    assert isinstance(active_call.caller, ForeignUser)
+    assert isinstance(active_call.receiver, LocalUser)
+    assert active_call.is_cross_border is True
+    assert switchboard.get_cross_border_calls_count() == 1
+
+
+def test_user_data_integrity() -> None:
+    switchboard = Switchboard()
+    raw = "999,Test User,+71234567890,888,Receiver Name,+33987654321"
+    active_call = switchboard.register_call(raw)
+
+    assert active_call.caller.id == 999
+    assert active_call.caller.fullname == "Test User"
+    assert active_call.caller.phone == "+71234567890"
+
+    assert active_call.receiver.id == 888
+    assert active_call.receiver.fullname == "Receiver Name"
+    assert active_call.receiver.phone == "+33987654321"
+
+
+def test_id_conversion_to_int() -> None:
+    switchboard = Switchboard()
+    active_call = switchboard.register_call(
+        "123,Name,+7111,456,Name2,+7222"
+    )
+
+    assert isinstance(active_call.caller.id, int)
+    assert isinstance(active_call.receiver.id, int)
+    assert active_call.caller.id == 123
+    assert active_call.receiver.id == 456
+
+
+def test_switchboard_state_isolation() -> None:
+    sb1 = Switchboard()
+    sb1.register_call("1,A,+71,2,B,+72")
+    sb1.register_call("3,C,+73,4,D,+14")
+
+    sb2 = Switchboard()
+    assert sb2.get_active_calls_count() == 0
+    assert sb2.get_cross_border_calls_count() == 0
+
+    assert sb1.get_active_calls_count() == 2
+    assert sb1.get_cross_border_calls_count() == 1

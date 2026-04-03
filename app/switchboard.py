@@ -19,6 +19,14 @@ class ActiveCall:
         return type(self.caller) is not type(self.receiver)
 
 
+def create_user(user_id: int, user_name: str, user_phone: str) -> User:
+    if user_phone[:len(LOCAL_PHONE_PREFIX)] == LOCAL_PHONE_PREFIX:
+        user = LocalUser(user_id, user_name, user_phone)
+    else:
+        user = ForeignUser(user_id, user_name, user_phone)
+    return user
+
+
 class Switchboard:
     def __init__(self) -> None:
         self._active_calls: list[ActiveCall] = []
@@ -32,16 +40,8 @@ class Switchboard:
         Например: "1001,Иван Петров,+71234567890,1085,Адам Яковлев,+71255556666"
         '''
         caller_id, caller_name, caller_phone, receiver_id, receiver_name, receiver_phone = raw_call.split(",")
-        caller_id = int(caller_id)
-        receiver_id = int(receiver_id)
-        if caller_phone[:len(LOCAL_PHONE_PREFIX)] == LOCAL_PHONE_PREFIX:
-            caller = LocalUser(caller_id, caller_name, caller_phone)
-        else:
-            caller = ForeignUser(caller_id, caller_name, caller_phone)
-        if receiver_phone[:len(LOCAL_PHONE_PREFIX)] == LOCAL_PHONE_PREFIX:
-            receiver = LocalUser(receiver_id, receiver_name, receiver_phone)
-        else:
-            receiver = ForeignUser(receiver_id, receiver_name, receiver_phone)
+        caller = create_user(int(caller_id), caller_name, caller_phone)
+        receiver = create_user(int(receiver_id), receiver_name, receiver_phone)
         active_call = ActiveCall(caller, receiver)
         self._active_calls.append(active_call)
         if active_call.is_cross_border:
@@ -53,3 +53,4 @@ class Switchboard:
 
     def get_cross_border_calls_count(self) -> int:
         return len(self._cross_border_calls)
+

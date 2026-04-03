@@ -118,3 +118,63 @@ def test_switchboard_state_isolation() -> None:
 
     assert sb1.get_active_calls_count() == 2
     assert sb1.get_cross_border_calls_count() == 1
+
+
+def test_register_call_raises_error_on_too_few_fields() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,Ivan,+79990000000,2,Petr"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_raises_error_on_too_many_fields() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,Ivan,+79990000000,2,Petr,+78880000000,extra_field"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_raises_error_on_non_digit_caller_id() -> None:
+    switchboard = Switchboard()
+    invalid_call = "abc,Ivan,+79990000000,2,Petr,+78880000000"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_raises_error_on_non_digit_receiver_id() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,Ivan,+79990000000,xyz,Petr,+78880000000"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_raises_error_on_caller_phone_without_plus() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,Ivan,79990000000,2,Petr,+78880000000"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_raises_error_on_receiver_phone_without_plus() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,Ivan,+79990000000,2,Petr,78880000000"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_preserves_state_after_error() -> None:
+    switchboard = Switchboard()
+
+    switchboard.register_call("1,Ivan,+79990000000,2,Petr,+78880000000")
+    assert switchboard.get_active_calls_count() == 1
+
+    with pytest.raises(ValueError):
+        switchboard.register_call("invalid_call")
+
+    assert switchboard.get_active_calls_count() == 1

@@ -61,7 +61,7 @@ def test_local_to_local_call_is_not_cross_border() -> None:
 def test_foreign_to_foreign_call_is_not_cross_border() -> None:
     switchboard = Switchboard()
     active_call = switchboard.register_call(
-        "50,UserDE,+49123,51,UserFR,+33987"
+        "50,User1,+49123,51,User2,+33987"
     )
 
     assert isinstance(active_call.caller, ForeignUser)
@@ -178,3 +178,59 @@ def test_register_call_preserves_state_after_error() -> None:
         switchboard.register_call("invalid_call")
 
     assert switchboard.get_active_calls_count() == 1
+
+
+def test_register_call_raises_error_on_lowercase_caller_name() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,ivan ivanov,+79990000000,2,Petr Petrov,+78880000000"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_raises_error_on_lowercase_receiver_name() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,Ivan Ivanov,+79990000000,2,petr petrov,+78880000000"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_raises_error_on_uppercase_caller_name() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,IVAN IVANOV,+79990000000,2,Petr Petrov,+78880000000"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_raises_error_on_uppercase_receiver_name() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,Ivan Ivanov,+79990000000,2,PETR PETROV,+78880000000"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_raises_error_on_mixed_case_caller_name() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,iVan IvAnOv,+79990000000,2,Petr Petrov,+78880000000"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_raises_error_on_empty_caller_name() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,,+79990000000,2,Petr Petrov,+78880000000"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)
+
+
+def test_register_call_raises_error_on_empty_receiver_name() -> None:
+    switchboard = Switchboard()
+    invalid_call = "1,Ivan Ivanov,+79990000000,2,,+78880000000"
+
+    with pytest.raises(ValueError):
+        switchboard.register_call(invalid_call)

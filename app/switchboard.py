@@ -46,8 +46,9 @@ class Switchboard:
         caller_id, caller_name, caller_phone, receiver_id, receiver_name, receiver_phone = parts
 
         if (not caller_id.isdigit() or not receiver_id.isdigit() or not caller_phone.startswith("+")
-                or not receiver_phone.startswith("+")):
-            raise ValueError("Invalid data: IDs must be digits, phones must start with '+'")
+                or not receiver_phone.startswith("+") or not caller_name.istitle() or not receiver_name.istitle()):
+            raise ValueError("Invalid data: IDs must be digits, phones must start with '+', "
+                             "names must be in Title Case (for example, 'Ivan Ivanov')")
 
         caller = create_user(int(caller_id), caller_name, caller_phone)
         receiver = create_user(int(receiver_id), receiver_name, receiver_phone)
